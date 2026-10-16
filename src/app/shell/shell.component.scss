@@ -1,0 +1,54 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-surface);
+}
+
+.shell__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shell__content {
+  flex: 1;
+  padding: 28px;
+}
+
+.shell__backdrop {
+  display: none;
+}
+
+@media (max-width: 840px) {
+  .shell {
+    display: block;
+  }
+
+  app-sidebar {
+    position: fixed;
+    z-index: 20;
+    top: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  .shell--collapsed app-sidebar {
+    transform: translateX(-110%);
+  }
+
+  .shell:not(.shell--collapsed) .shell__backdrop {
+    display: block;
+    position: fixed;
+    z-index: 15;
+    inset: 0;
+    border: 0;
+    background: var(--color-surface-overlay);
+    backdrop-filter: var(--backdrop-blur);
+  }
+}

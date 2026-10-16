@@ -1,0 +1,39 @@
+<header class="header">
+  <div class="header__title-wrapper">
+    <button
+      type="button"
+      class="header__menu"
+      (click)="shell.toggleCollapsed()"
+      [attr.aria-expanded]="!shell.collapsed()"
+      [attr.aria-label]="shell.collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+    >
+      <app-icon [name]="shell.collapsed() ? 'menu' : 'collapse'" />
+    </button>
+    <h1 class="header__title">{{ shell.pageTitle() }}</h1>
+  </div>
+
+  <form class="header__search" role="search" (submit)="onSubmit($event)">
+    <label class="header__search-label" for="global-search">Search pages</label>
+    <div class="header__search-content">
+      <app-icon name="search" />
+      <input
+        id="global-search"
+        class="header__search-field"
+        type="search"
+        placeholder="Search navigation"
+        [value]="shell.searchQuery()"
+        (input)="onSearchInput($event)"
+      />
+      @if (shell.searchQuery()) {
+        <button
+          type="button"
+          class="header__clear-btn"
+          (click)="shell.clearSearch()"
+          aria-label="Clear search"
+        >
+          <app-icon name="close" />
+        </button>
+      }
+    </div>
+  </form>
+</header>

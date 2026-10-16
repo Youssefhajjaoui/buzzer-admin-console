@@ -1,0 +1,59 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <span class="sidebar__mark" aria-hidden="true">B</span>
+    @if (!shell.collapsed()) {
+      <span class="sidebar__name">Buzzer</span>
+    }
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Primary">
+    @if (shell.searchQuery()) {
+      <p class="sidebar__count">
+        {{ matchCount() }} {{ matchCount() === 1 ? 'page' : 'pages' }}
+      </p>
+    }
+
+    @if (dashboardVisible()) {
+      <a
+        class="sidebar__link"
+        routerLink="/dashboard"
+        routerLinkActive="sidebar__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [attr.title]="shell.collapsed() ? dashboard.label : null"
+      >
+        <app-icon [name]="dashboard.icon" />
+        @if (!shell.collapsed()) {
+          <span>{{ dashboard.label }}</span>
+        }
+      </a>
+    }
+
+    @for (group of groups(); track group.label) {
+      <section class="sidebar__group">
+        @if (!shell.collapsed()) {
+          <h2 class="sidebar__group-label">{{ group.label }}</h2>
+        } @else {
+          <div class="sidebar__divider" aria-hidden="true"></div>
+        }
+
+        @for (item of group.items; track item.path) {
+          <a
+            class="sidebar__link"
+            [routerLink]="item.path"
+            routerLinkActive="sidebar__link--active"
+            [attr.title]="shell.collapsed() ? item.label : null"
+          >
+            <app-icon [name]="item.icon" />
+            @if (!shell.collapsed()) {
+              <span>{{ item.label }}</span>
+            }
+          </a>
+        }
+      </section>
+    }
+
+    @if (matchCount() === 0) {
+      <p class="sidebar__empty">No pages match that search.</p>
+    }
+  </nav>
+</aside>

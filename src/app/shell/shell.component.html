@@ -1,0 +1,15 @@
+<div class="shell" [class.shell--collapsed]="shell.collapsed()">
+  <app-sidebar />
+  <button
+    type="button"
+    class="shell__backdrop"
+    aria-label="Close navigation"
+    (click)="shell.setCollapsed(true)"
+  ></button>
+  <div class="shell__main">
+    <app-header (searchSubmit)="onSearchSubmit()" />
+    <main class="shell__content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

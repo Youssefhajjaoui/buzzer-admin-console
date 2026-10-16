@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 72px;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.header__title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.header__menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  color: #fff;
+  cursor: pointer;
+}
+
+.header__menu:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.header__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header__search {
+  width: min(420px, 46vw);
+}
+
+.header__search-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.header__search-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.header__search-content:focus-within {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.header__search-field {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+}
+
+.header__search-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+.header__clear-btn {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.header__clear-btn:hover {
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-wrap: wrap;
+    padding: 14px 16px;
+  }
+
+  .header__search {
+    width: 100%;
+  }
+}

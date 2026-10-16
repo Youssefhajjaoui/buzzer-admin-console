@@ -1,0 +1,14 @@
+<section class="dashboard">
+  <p class="dashboard__lead">
+    Sports operations for matches, publishing, finance, and system administration.
+  </p>
+
+  <div class="dashboard__grid">
+    @for (group of groups; track group.label) {
+      <a class="dashboard__card" [routerLink]="group.items[0].path">
+        <h2>{{ group.label }}</h2>
+        <p>{{ group.items.length }} sections</p>
+      </a>
+    }
+  </div>
+</section>
