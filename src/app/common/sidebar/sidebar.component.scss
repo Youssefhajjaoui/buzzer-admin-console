@@ -35,15 +35,11 @@
   padding: 0;
 }
 
-.sidebar__mark {
-  display: grid;
-  place-items: center;
+.sidebar__logo {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--color-accent);
-  color: #131515;
-  font-weight: 700;
+  object-fit: cover;
 }
 
 .sidebar__name {
