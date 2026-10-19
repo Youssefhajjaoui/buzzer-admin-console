@@ -1,0 +1,211 @@
+@if (organisation(); as organisation) {
+  <nav class="crumbs">
+    <a routerLink="/sports">Sports</a>
+    <span>/</span>
+    <a [routerLink]="['/sports', sportId]">{{ sport()?.name || organisation.governingBody?.sport?.name || 'Sport' }}</a>
+    <span>/</span>
+    <a [routerLink]="['/sports', sportId, 'governing-bodies', bodyId]">{{ organisation.governingBody?.name || 'Governing body' }}</a>
+    <span>/</span>
+    <span>{{ organisation.name }}</span>
+  </nav>
+  <header class="page-head">
+    @if (organisation.crestUrl) {
+      <img class="avatar" [src]="organisation.crestUrl" alt="" />
+    }
+    <div>
+      <h2>{{ organisation.name }}</h2>
+      <p>{{ organisation.city || 'City not set' }} {{ organisation.country ? '· ' + organisation.country : '' }}</p>
+    </div>
+  </header>
+}
+
+@if (error()) {
+  <p class="banner banner--danger" role="alert">{{ error() }}</p>
+}
+
+<div class="stack">
+  <section>
+    <div class="section-title">
+      <h2>Participants</h2>
+      @if (canWrite) {
+        <button class="btn btn--accent" type="button" (click)="playerDialog.showModal()">Add participant</button>
+      }
+    </div>
+    <div class="table-wrap">
+      <table class="grid">
+        <thead><tr><th>Name</th><th>Position</th><th>Number</th><th>Team</th></tr></thead>
+        <tbody>
+          @for (player of players(); track player.id) {
+            <tr>
+              <td>
+                <a class="row-link" [routerLink]="['/sports', sportId, 'governing-bodies', bodyId, 'organisations', organisationId, 'participants', player.id]">
+                  {{ player.firstName }} {{ player.lastName }}
+                </a>
+              </td>
+              <td>{{ player.position || '—' }}</td>
+              <td>{{ player.jerseyNumber ?? '—' }}</td>
+              <td>{{ player.team?.name || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="muted">No participants yet.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <h2>Squad</h2>
+      @if (canWrite) {
+        <button class="btn btn--accent" type="button" (click)="openSquad(null, squadDialog)">Add squad member</button>
+      }
+    </div>
+    <div class="table-wrap">
+      <table class="grid">
+        <thead><tr><th>Player</th><th>Position</th><th>Age</th><th>Agreement end</th>@if (canWrite) { <th></th> }</tr></thead>
+        <tbody>
+          @for (member of squad(); track member.id) {
+            <tr>
+              <td>
+                <div class="sport-cell">
+                  @if (squadPhoto(member); as photo) {
+                    <img [src]="photo" alt="" />
+                  } @else {
+                    <span class="avatar avatar--empty">—</span>
+                  }
+                  <span>{{ squadName(member) }}</span>
+                </div>
+              </td>
+              <td>{{ member.position || '—' }}</td>
+              <td>{{ squadAge(member) ?? '—' }}</td>
+              <td>{{ member.agreementEnd ? (member.agreementEnd | date: 'mediumDate') : '—' }}</td>
+              @if (canWrite) {
+                <td class="toolbar__actions">
+                  <button class="btn btn--ghost" type="button" (click)="openSquad(member, squadDialog)">Edit</button>
+                  <button class="btn btn--danger" type="button" (click)="removeSquad(member)">Remove</button>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr><td colspan="5" class="muted">No squad members yet.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <h2>Staff</h2>
+      @if (canWrite) {
+        <button class="btn btn--accent" type="button" (click)="openStaff(null, staffDialog)">Add staff</button>
+      }
+    </div>
+    @for (group of staff()?.groups ?? []; track group.category) {
+      <h3>{{ categoryLabel(group.category) }}</h3>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead><tr><th>Name</th><th>Role</th><th>Nationality</th>@if (canWrite) { <th></th> }</tr></thead>
+          <tbody>
+            @for (member of group.members; track member.id) {
+              <tr>
+                <td>
+                  <div class="sport-cell">
+                    @if (member.photoUrl) {
+                      <img [src]="member.photoUrl" alt="" />
+                    } @else {
+                      <span class="avatar avatar--empty">—</span>
+                    }
+                    <span>{{ member.name }}</span>
+                  </div>
+                </td>
+                <td>{{ member.roleTitle }}</td>
+                <td>{{ member.nationality || '—' }}</td>
+                @if (canWrite) {
+                  <td class="toolbar__actions">
+                    <button class="btn btn--ghost" type="button" (click)="openStaff(member, staffDialog)">Edit</button>
+                    <button class="btn btn--danger" type="button" (click)="removeStaff(member.id)">Remove</button>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="muted">No one in this group.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+<dialog #playerDialog class="dialog">
+  <form [formGroup]="playerForm" (ngSubmit)="savePlayer(playerDialog)">
+    <h2>Add participant</h2>
+    <label class="field"><span>First name</span><input formControlName="firstName" /></label>
+    <label class="field"><span>Last name</span><input formControlName="lastName" /></label>
+    <label class="field"><span>Position</span><input formControlName="position" /></label>
+    <label class="field"><span>Jersey number</span><input type="number" formControlName="jerseyNumber" /></label>
+    <label class="field">
+      <span>Team</span>
+      <select formControlName="teamId">
+        <option value="">New team</option>
+        @for (team of teams(); track team.id) {
+          <option [value]="team.id">{{ team.name }}</option>
+        }
+      </select>
+    </label>
+    @if (!playerForm.controls.teamId.value) {
+      <label class="field"><span>New team name</span><input formControlName="teamName" /></label>
+    }
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="playerDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #squadDialog class="dialog">
+  <form [formGroup]="squadForm" (ngSubmit)="saveSquad(squadDialog)">
+    <h2>{{ editingSquad() ? 'Edit squad member' : 'Add squad member' }}</h2>
+    @if (!editingSquad()) {
+      <label class="field">
+        <span>User</span>
+        <select formControlName="userId">
+          <option value="">Select a user</option>
+          @for (user of users(); track user.id) {
+            <option [value]="user.id">{{ user.firstName }} {{ user.lastName }} · {{ user.email }}</option>
+          }
+        </select>
+      </label>
+    }
+    <label class="field"><span>Position</span><input formControlName="position" /></label>
+    <label class="field"><span>Agreement end</span><input type="date" formControlName="agreementEnd" /></label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="squadDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #staffDialog class="dialog">
+  <form [formGroup]="staffForm" (ngSubmit)="saveStaff(staffDialog)">
+    <h2>{{ editingStaffId() ? 'Edit staff' : 'Add staff' }}</h2>
+    <label class="field"><span>Name</span><input formControlName="name" /></label>
+    <label class="field"><span>Role title</span><input formControlName="roleTitle" /></label>
+    <label class="field">
+      <span>Category</span>
+      <select formControlName="category">
+        @for (category of categories; track category.value) {
+          <option [value]="category.value">{{ category.label }}</option>
+        }
+      </select>
+    </label>
+    <label class="field"><span>Nationality</span><input formControlName="nationality" /></label>
+    <label class="field"><span>Photo URL</span><input formControlName="photoUrl" /></label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="staffDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>

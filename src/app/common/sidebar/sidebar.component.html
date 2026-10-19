@@ -20,6 +20,7 @@
         routerLinkActive="sidebar__link--active"
         [routerLinkActiveOptions]="{ exact: true }"
         [attr.title]="shell.collapsed() ? dashboard.label : null"
+        (click)="onSelectPage()"
       >
         <app-icon [name]="dashboard.icon" />
         @if (!shell.collapsed()) {
@@ -42,6 +43,7 @@
             [routerLink]="item.path"
             routerLinkActive="sidebar__link--active"
             [attr.title]="shell.collapsed() ? item.label : null"
+            (click)="onSelectPage()"
           >
             <app-icon [name]="item.icon" />
             @if (!shell.collapsed()) {
@@ -56,4 +58,30 @@
       <p class="sidebar__empty">No pages match that search.</p>
     }
   </nav>
+
+  @if (auth.user(); as user) {
+    <div class="sidebar__account">
+      <div class="sidebar__account-card">
+        <span class="sidebar__avatar" aria-hidden="true">{{ initials(user.email) }}</span>
+        @if (!shell.collapsed()) {
+          <div class="sidebar__identity">
+            <span class="sidebar__email" [title]="user.email">{{ user.email }}</span>
+            <span class="sidebar__role">{{ roleLabel(user.role) }}</span>
+          </div>
+        }
+      </div>
+      <button
+        class="sidebar__sign-out"
+        type="button"
+        (click)="signOut()"
+        [attr.aria-label]="'Sign out ' + user.email"
+        [attr.title]="shell.collapsed() ? 'Sign out' : null"
+      >
+        <app-icon name="logout" />
+        @if (!shell.collapsed()) {
+          <span>Sign out</span>
+        }
+      </button>
+    </div>
+  }
 </aside>

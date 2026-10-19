@@ -1,0 +1,117 @@
+<section>
+  <div class="stats">
+    <article class="stat"><span>Sports</span><strong>{{ counts().sports }}</strong></article>
+    <article class="stat"><span>Governing bodies</span><strong>{{ counts().bodies }}</strong></article>
+    <article class="stat"><span>Organisations</span><strong>{{ counts().organisations }}</strong></article>
+    <article class="stat"><span>Participants</span><strong>{{ counts().participants }}</strong></article>
+  </div>
+
+  @if (error()) {
+    <p class="banner banner--danger" role="alert">{{ error() }}</p>
+  }
+
+  <div class="toolbar">
+    <input class="search" type="search" placeholder="Search sports" (input)="onSearch($event)" />
+    @if (canWrite) {
+      <div class="toolbar__actions">
+        <label class="btn btn--ghost">
+          {{ importing() ? 'Importing…' : 'Import CSV or JSON' }}
+          <input hidden type="file" accept=".csv,.json,application/json,text/csv" (change)="onImport($event)" />
+        </label>
+        <button class="btn btn--accent" type="button" (click)="openCreate(sportDialog)">Add sport</button>
+      </div>
+    }
+  </div>
+  @if (importReport()) {
+    <p class="banner">{{ importReport() }}</p>
+  }
+
+  <div class="table-wrap">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Sport</th>
+          <th>Governing bodies</th>
+          <th>Organisations</th>
+          <th>Participants</th>
+          @if (canWrite) {
+            <th>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td colspan="5" class="muted">Loading sports…</td></tr>
+        } @else if (sports().length === 0) {
+          <tr><td colspan="5" class="muted">No sports match that search.</td></tr>
+        } @else {
+          @for (sport of sports(); track sport.id; let index = $index) {
+            <tr [style.box-shadow]="'inset 3px 0 0 ' + accent(index)">
+              <td>
+                <div class="sport-cell">
+                  @if (sport.iconUrl) {
+                    <img [src]="sport.iconUrl" [alt]="" />
+                  } @else {
+                    <span class="avatar avatar--empty">{{ sport.name.slice(0, 1) }}</span>
+                  }
+                  <a class="row-link" [routerLink]="['/sports', sport.id]">{{ sport.name }}</a>
+                </div>
+              </td>
+              <td>{{ sport.governingBodyCount ?? 0 }}</td>
+              <td>{{ sport.organizationCount ?? 0 }}</td>
+              <td>{{ sport.participantCount ?? 0 }}</td>
+              @if (canWrite) {
+                <td class="toolbar__actions">
+                  <button class="btn btn--ghost" type="button" (click)="openEdit(sport, sportDialog)">Edit</button>
+                  <button class="btn btn--danger" type="button" (click)="deleting.set(sport); deleteDialog.showModal()">
+                    Delete
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <button class="btn" type="button" [disabled]="page() <= 1" (click)="changePage(page() - 1)">Previous</button>
+    <span class="muted">Page {{ page() }} of {{ totalPages }}</span>
+    <button class="btn" type="button" [disabled]="page() >= totalPages" (click)="changePage(page() + 1)">Next</button>
+  </div>
+</section>
+
+<dialog #sportDialog class="dialog">
+  <form [formGroup]="form" (ngSubmit)="save(sportDialog)">
+    <h2>{{ editing() ? 'Edit sport' : 'Add sport' }}</h2>
+    <label class="field">
+      <span>Name</span>
+      <input formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <small>Name is required.</small>
+      }
+    </label>
+    <label class="field">
+      <span>Description</span>
+      <textarea rows="3" formControlName="description"></textarea>
+    </label>
+    <label class="field">
+      <span>Icon URL</span>
+      <input formControlName="iconUrl" />
+    </label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="sportDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #deleteDialog class="dialog">
+  <h2>Delete {{ deleting()?.name }}?</h2>
+  <p class="muted">This removes the sport from the catalogue. The name stays reserved.</p>
+  <div class="dialog__actions">
+    <button class="btn" type="button" (click)="deleteDialog.close()">Cancel</button>
+    <button class="btn btn--danger" type="button" (click)="confirmDelete(deleteDialog)">Delete</button>
+  </div>
+</dialog>

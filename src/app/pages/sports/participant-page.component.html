@@ -1,0 +1,30 @@
+@if (error()) {
+  <p class="banner banner--danger" role="alert">{{ error() }}</p>
+}
+
+@if (player(); as player) {
+  <nav class="crumbs">
+    <a routerLink="/sports">Sports</a>
+    <span>/</span>
+    <a [routerLink]="['/sports', sportId]">{{ sport()?.name || 'Sport' }}</a>
+    <span>/</span>
+    <a [routerLink]="['/sports', sportId, 'governing-bodies', bodyId]">{{ organisation()?.governingBody?.name || 'Governing body' }}</a>
+    <span>/</span>
+    <a [routerLink]="['/sports', sportId, 'governing-bodies', bodyId, 'organisations', organisationId]">
+      {{ organisation()?.name || 'Organisation' }}
+    </a>
+    <span>/</span>
+    <span>{{ player.firstName }} {{ player.lastName }}</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <h2>{{ player.firstName }} {{ player.lastName }}</h2>
+      <p>
+        {{ player.position || 'Position not set' }}
+        · {{ player.team?.name || 'No team' }}
+        · Number {{ player.jerseyNumber ?? '—' }}
+      </p>
+    </div>
+  </header>
+}

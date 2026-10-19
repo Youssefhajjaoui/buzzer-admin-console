@@ -1,0 +1,67 @@
+@if (sport(); as sport) {
+  <nav class="crumbs">
+    <a routerLink="/sports">Sports</a>
+    <span>/</span>
+    <span>{{ sport.name }}</span>
+  </nav>
+
+  <header class="page-head">
+    @if (sport.iconUrl) {
+      <img class="avatar" [src]="sport.iconUrl" alt="" />
+    }
+    <div>
+      <h2>{{ sport.name }}</h2>
+      <p>{{ sport.description || 'No description.' }}</p>
+    </div>
+  </header>
+
+  <div class="stats">
+    <article class="stat"><span>Governing bodies</span><strong>{{ sport.governingBodyCount ?? bodies().length }}</strong></article>
+    <article class="stat"><span>Organisations</span><strong>{{ sport.organizationCount ?? 0 }}</strong></article>
+    <article class="stat"><span>Participants</span><strong>{{ sport.participantCount ?? 0 }}</strong></article>
+  </div>
+}
+
+@if (error()) {
+  <p class="banner banner--danger" role="alert">{{ error() }}</p>
+}
+
+<div class="section-title">
+  <h2>Governing bodies</h2>
+  @if (canWrite) {
+    <button class="btn btn--accent" type="button" (click)="bodyDialog.showModal()">Add governing body</button>
+  }
+</div>
+
+<div class="table-wrap">
+  <table class="grid">
+    <thead>
+      <tr><th>Name</th><th>Country</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+      @for (body of bodies(); track body.id) {
+        <tr>
+          <td>
+            <a class="row-link" [routerLink]="['/sports', sportId, 'governing-bodies', body.id]">{{ body.name }}</a>
+          </td>
+          <td>{{ body.country || '—' }}</td>
+          <td>{{ body.createdAt | date: 'mediumDate' }}</td>
+        </tr>
+      } @empty {
+        <tr><td colspan="3" class="muted">No governing bodies yet.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<dialog #bodyDialog class="dialog">
+  <form [formGroup]="form" (ngSubmit)="save(bodyDialog)">
+    <h2>Add governing body</h2>
+    <label class="field"><span>Name</span><input formControlName="name" /></label>
+    <label class="field"><span>Country</span><input formControlName="country" /></label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="bodyDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>

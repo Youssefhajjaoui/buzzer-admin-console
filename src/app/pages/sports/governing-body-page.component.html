@@ -1,0 +1,69 @@
+@if (body(); as body) {
+  <nav class="crumbs">
+    <a routerLink="/sports">Sports</a>
+    <span>/</span>
+    <a [routerLink]="['/sports', sportId]">{{ body.sport?.name || 'Sport' }}</a>
+    <span>/</span>
+    <span>{{ body.name }}</span>
+  </nav>
+
+  <header class="page-head">
+    @if (body.logoUrl) {
+      <img class="avatar" [src]="body.logoUrl" alt="" />
+    }
+    <div>
+      <h2>{{ body.name }}</h2>
+      <p>{{ body.country || 'Country not set' }} · Created {{ body.createdAt | date: 'mediumDate' }}</p>
+    </div>
+  </header>
+
+  <div class="stats">
+    <article class="stat"><span>Organisations</span><strong>{{ total() }}</strong></article>
+  </div>
+}
+
+@if (error()) {
+  <p class="banner banner--danger" role="alert">{{ error() }}</p>
+}
+
+<div class="section-title">
+  <h2>Organisations</h2>
+  @if (canWrite) {
+    <button class="btn btn--accent" type="button" (click)="orgDialog.showModal()">Add organisation</button>
+  }
+</div>
+
+<div class="table-wrap">
+  <table class="grid">
+    <thead>
+      <tr><th>Name</th><th>City</th><th>Country</th></tr>
+    </thead>
+    <tbody>
+      @for (organisation of organisations(); track organisation.id) {
+        <tr>
+          <td>
+            <a class="row-link" [routerLink]="['/sports', sportId, 'governing-bodies', bodyId, 'organisations', organisation.id]">
+              {{ organisation.name }}
+            </a>
+          </td>
+          <td>{{ organisation.city || '—' }}</td>
+          <td>{{ organisation.country || '—' }}</td>
+        </tr>
+      } @empty {
+        <tr><td colspan="3" class="muted">No organisations yet.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<dialog #orgDialog class="dialog">
+  <form [formGroup]="form" (ngSubmit)="save(orgDialog)">
+    <h2>Add organisation</h2>
+    <label class="field"><span>Name</span><input formControlName="name" /></label>
+    <label class="field"><span>City</span><input formControlName="city" /></label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="orgDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
