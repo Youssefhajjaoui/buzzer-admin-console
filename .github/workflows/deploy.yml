@@ -1,0 +1,101 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: pages-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Restore the Cloudflare login
+        id: auth-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cloudflare-auth
+          key: cloudflare-auth-${{ github.run_id }}
+          restore-keys: |
+            cloudflare-auth-
+
+      - name: Prepare the Cloudflare login
+        env:
+          CLOUDFLARE_OAUTH_TOKEN: ${{ secrets.CLOUDFLARE_OAUTH_TOKEN }}
+          CLOUDFLARE_REFRESH_TOKEN: ${{ secrets.CLOUDFLARE_REFRESH_TOKEN }}
+          CLOUDFLARE_TOKEN_EXPIRY: ${{ secrets.CLOUDFLARE_TOKEN_EXPIRY }}
+          CLOUDFLARE_SCOPES: '[ "user:read", "offline_access", "k2.read", "k2.write", "account:read", "workers:write", "workers_kv:write", "workers_routes:write", "workers_scripts:write", "workers_tail:read", "d1:write", "pages:write", "zone:read", "ssl_certs:write", "ai:write", "ai-search:write", "ai-search:run", "agent-memory:write", "queues:write", "pipelines:write", "secrets_store:write", "artifacts:write", "flagship:write", "containers:write", "cloudchamber:write", "connectivity:admin", "email_routing:write", "email_sending:write", "browser:write", "challenge-widgets.write" ]'
+        run: |
+          python3 << 'PY'
+          import os
+          import pathlib
+
+          destination = pathlib.Path.home() / ".config" / ".wrangler" / "config" / "default.toml"
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          cached = pathlib.Path(".cloudflare-auth/default.toml")
+          if cached.exists():
+              destination.write_text(cached.read_text())
+          else:
+              scopes = os.environ["CLOUDFLARE_SCOPES"]
+              destination.write_text(
+                  "\n".join(
+                      [
+                          f'oauth_token = "{os.environ["CLOUDFLARE_OAUTH_TOKEN"]}"',
+                          f'expiration_time = "{os.environ["CLOUDFLARE_TOKEN_EXPIRY"]}"',
+                          f'refresh_token = "{os.environ["CLOUDFLARE_REFRESH_TOKEN"]}"',
+                          f"scopes = {scopes}",
+                      ]
+                  )
+                  + "\n"
+              )
+
+          lines = []
+          for line in destination.read_text().splitlines():
+              if line.startswith("expiration_time"):
+                  lines.append('expiration_time = "2000-01-01T00:00:00.000Z"')
+              else:
+                  lines.append(line)
+          destination.write_text("\n".join(lines) + "\n")
+          PY
+
+      - name: Refresh the Cloudflare login
+        run: npx wrangler@4 whoami
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npx npm@11 ci
+
+      - name: Build the production console
+        run: npx ng build --configuration=production
+
+      - name: Publish to Cloudflare Pages
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@4 pages deploy dist/buzzer-admin-console/browser --project-name buzzer-admin-console --branch main
+
+      - name: Keep the refreshed login for the next run
+        if: always()
+        run: |
+          mkdir -p .cloudflare-auth
+          cp "$HOME/.config/.wrangler/config/default.toml" .cloudflare-auth/default.toml
+
+      - name: Save the Cloudflare login
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cloudflare-auth
+          key: cloudflare-auth-${{ github.run_id }}
