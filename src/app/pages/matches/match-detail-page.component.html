@@ -1,0 +1,116 @@
+@if (error()) {
+  <p class="banner banner--danger" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Loading match…</p>
+} @else if (match(); as current) {
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a [routerLink]="['/matches']" [queryParams]="returnQuery()">Matches</a>
+    <span>/</span>
+    <span>{{ current.homeTeam?.name || 'Home' }} vs {{ current.awayTeam?.name || 'Away' }}</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <p class="muted">{{ current.sport?.name || 'Match' }}</p>
+      <h2>{{ current.homeTeam?.name || 'Home' }} vs {{ current.awayTeam?.name || 'Away' }}</h2>
+      <p>
+        <span class="tag" [class]="'tag tag--' + current.status.toLowerCase()">{{ label(current.status) }}</span>
+        {{ scoreboard()?.home?.score ?? current.homeScore }} – {{ scoreboard()?.away?.score ?? current.awayScore }}
+      </p>
+    </div>
+  </header>
+
+  <dl class="facts">
+    <div><dt>Venue</dt><dd>{{ current.venue || '—' }}</dd></div>
+    <div><dt>Scheduled</dt><dd>{{ current.scheduledAt | date: 'MMM d, y, HH:mm' }}</dd></div>
+    @if (current.status === 'LIVE' && current.startedAt) {
+      <div><dt>Started</dt><dd>{{ current.startedAt | date: 'MMM d, y, HH:mm' }}</dd></div>
+    }
+    @if (current.status === 'FINISHED' && current.finishedAt) {
+      <div><dt>Finished</dt><dd>{{ current.finishedAt | date: 'MMM d, y, HH:mm' }}</dd></div>
+    }
+  </dl>
+
+  @if (canManage && actions().length) {
+    <div class="toolbar__actions">
+      @for (action of actions(); track action.status) {
+        <button
+          class="btn"
+          [class.btn--accent]="action.status === 'LIVE'"
+          [class.btn--danger]="action.status === 'CANCELLED'"
+          type="button"
+          (click)="request(action, confirmDialog)"
+        >
+          {{ action.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <section class="stack">
+    <div>
+      <div class="section-title"><h2>Stats</h2></div>
+      <div class="stats">
+        <article class="stat">
+          <span>{{ stats()?.home?.team || current.homeTeam?.name }}</span>
+          @if (counts(stats()?.home?.events ?? {}); as rows) {
+            @if (rows.length === 0) {
+              <strong class="muted">No events</strong>
+            } @else {
+              @for (row of rows; track row.type) {
+                <strong>{{ row.count }} {{ row.type }}</strong>
+              }
+            }
+          }
+        </article>
+        <article class="stat">
+          <span>{{ stats()?.away?.team || current.awayTeam?.name }}</span>
+          @if (counts(stats()?.away?.events ?? {}); as rows) {
+            @if (rows.length === 0) {
+              <strong class="muted">No events</strong>
+            } @else {
+              @for (row of rows; track row.type) {
+                <strong>{{ row.count }} {{ row.type }}</strong>
+              }
+            }
+          }
+        </article>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title"><h2>Timeline</h2></div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr><th>Minute</th><th>Type</th><th>Team</th><th>Player</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            @for (event of events(); track event.id) {
+              <tr>
+                <td>{{ event.minute }}</td>
+                <td>{{ eventType(event.type) }}</td>
+                <td>{{ event.team?.name || '—' }}</td>
+                <td>{{ player(event) }}</td>
+                <td>{{ event.detail || '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="muted">No events yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+}
+
+<dialog #confirmDialog class="dialog">
+  <h2>{{ pending()?.label }}?</h2>
+  <p class="muted">This updates the match for everyone using the console.</p>
+  <div class="dialog__actions">
+    <button class="btn" type="button" (click)="confirmDialog.close()">Back</button>
+    <button class="btn btn--danger" type="button" (click)="confirm(confirmDialog)">Confirm</button>
+  </div>
+</dialog>

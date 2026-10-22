@@ -29,7 +29,18 @@ export const routes: Routes = [
           ),
         data: { title: 'Dashboard' },
       },
-      section('matches', 'Matches', 'Match Management'),
+      {
+        path: 'matches',
+        loadComponent: () =>
+          import('./pages/matches/matches-page.component').then((module) => module.MatchesPage),
+        data: { title: 'Matches', group: 'Match Management' },
+      },
+      {
+        path: 'matches/:matchId',
+        loadComponent: () =>
+          import('./pages/matches/match-detail-page.component').then((module) => module.MatchDetailPage),
+        data: { title: 'Match', group: 'Match Management' },
+      },
       section('competitions', 'Competitions', 'Match Management'),
       {
         path: 'sports',

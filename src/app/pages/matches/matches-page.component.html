@@ -1,0 +1,175 @@
+<section>
+  @if (error()) {
+    <p class="banner banner--danger" role="alert">{{ error() }}</p>
+  }
+
+  <div class="tabs" role="tablist" aria-label="Match status">
+    @for (tab of tabs; track tab) {
+      <button
+        type="button"
+        role="tab"
+        class="tabs__tab"
+        [class.is-active]="status() === tab"
+        [attr.aria-selected]="status() === tab"
+        (click)="selectStatus(tab)"
+      >
+        {{ tabLabel(tab) }}
+      </button>
+    }
+  </div>
+
+  <div class="toolbar">
+    <input
+      #venueSearch
+      class="search"
+      type="search"
+      placeholder="Search venue"
+      (input)="onSearch($event)"
+    />
+    @if (canManage) {
+      <button class="btn btn--accent" type="button" (click)="openCreate(scheduleDialog)">Schedule match</button>
+    }
+  </div>
+
+  <div class="table-wrap">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Sport</th>
+          <th>Home vs away</th>
+          <th>
+            <button class="sort" type="button" (click)="toggleSort()">
+              Scheduled at {{ sortOrder() === 'asc' ? '↑' : '↓' }}
+            </button>
+          </th>
+          <th>Venue</th>
+          <th>Status</th>
+          <th>Score</th>
+          @if (canManage) {
+            <th>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td [attr.colspan]="canManage ? 7 : 6" class="muted">Loading matches…</td></tr>
+        } @else if (matches().length === 0) {
+          <tr><td [attr.colspan]="canManage ? 7 : 6" class="muted">No matches in this view.</td></tr>
+        } @else {
+          @for (match of matches(); track match.id) {
+            <tr>
+              <td>{{ match.sport?.name || '—' }}</td>
+              <td>
+                <a class="row-link" [routerLink]="['/matches', match.id]" [queryParams]="listQuery()">
+                  {{ match.homeTeam?.name || 'Home' }} vs {{ match.awayTeam?.name || 'Away' }}
+                </a>
+              </td>
+              <td>{{ match.scheduledAt | date: 'MMM d, y, HH:mm' }}</td>
+              <td>{{ match.venue || '—' }}</td>
+              <td><span class="tag" [class]="'tag tag--' + match.status.toLowerCase()">{{ label(match.status) }}</span></td>
+              <td>{{ match.homeScore }} – {{ match.awayScore }}</td>
+              @if (canManage) {
+                <td class="toolbar__actions">
+                  <button class="btn btn--ghost" type="button" (click)="openEdit(match, editDialog)">Edit</button>
+                  <button class="btn btn--danger" type="button" (click)="deleting.set(match); deleteDialog.showModal()">Delete</button>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <button class="btn" type="button" [disabled]="page() <= 1" (click)="changePage(page() - 1)">Previous</button>
+    <span class="muted">Page {{ page() }} of {{ totalPages }}</span>
+    <button class="btn" type="button" [disabled]="page() >= totalPages" (click)="changePage(page() + 1)">Next</button>
+  </div>
+</section>
+
+<dialog #scheduleDialog class="dialog">
+  <form [formGroup]="scheduleForm" (ngSubmit)="schedule(scheduleDialog)">
+    <h2>Schedule match</h2>
+    @if (formError()) {
+      <p class="banner banner--danger" role="alert">{{ formError() }}</p>
+    }
+    <label class="field">
+      <span>Sport</span>
+      <select formControlName="sportId" (change)="onSportChange()">
+        <option value="">Select a sport</option>
+        @for (sport of sports(); track sport.id) {
+          <option [value]="sport.id">{{ sport.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Home team</span>
+      <select formControlName="homeTeamId">
+        <option value="">Select a team</option>
+        @for (team of teams(); track team.id) {
+          <option [value]="team.id">{{ team.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Away team</span>
+      <select formControlName="awayTeamId">
+        <option value="">Select a team</option>
+        @for (team of teams(); track team.id) {
+          <option [value]="team.id">{{ team.name }}</option>
+        }
+      </select>
+      @if (scheduleForm.controls.awayTeamId.hasError('sameTeam')) {
+        <small>Home and away must be different teams.</small>
+      }
+    </label>
+    @if (scheduleForm.controls.sportId.value && teams().length < 2) {
+      <p class="muted">This sport needs two teams before a match can be scheduled.</p>
+    }
+    <label class="field">
+      <span>Date and time</span>
+      <input type="datetime-local" formControlName="scheduledAt" />
+    </label>
+    <label class="field">
+      <span>Venue</span>
+      <input formControlName="venue" />
+    </label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="scheduleDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Schedule</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #editDialog class="dialog">
+  <form [formGroup]="editForm" (ngSubmit)="saveEdit(editDialog)">
+    <h2>Edit match</h2>
+    @if (formError()) {
+      <p class="banner banner--danger" role="alert">{{ formError() }}</p>
+    }
+    <label class="field">
+      <span>Date and time</span>
+      <input type="datetime-local" formControlName="scheduledAt" />
+    </label>
+    <label class="field">
+      <span>Venue</span>
+      <input formControlName="venue" />
+    </label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="editDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #deleteDialog class="dialog">
+  <h2>Delete this match?</h2>
+  <p class="muted">
+    {{ deleting()?.homeTeam?.name }} vs {{ deleting()?.awayTeam?.name }} will leave the list.
+  </p>
+  <div class="dialog__actions">
+    <button class="btn" type="button" (click)="deleteDialog.close()">Cancel</button>
+    <button class="btn btn--danger" type="button" (click)="confirmDelete(deleteDialog)">Delete</button>
+  </div>
+</dialog>

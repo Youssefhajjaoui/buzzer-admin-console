@@ -79,6 +79,9 @@ jobs:
       - name: Install dependencies
         run: npx npm@11 ci
 
+      - name: Run unit tests
+        run: npx ng test --watch=false
+
       - name: Build the production console
         run: npx ng build --configuration=production
 
