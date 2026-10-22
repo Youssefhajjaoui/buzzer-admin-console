@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { statusActions, teamsAreDifferent } from './match.model';
+import { goalNeedsTeam, statusActions, teamsAreDifferent, withEventNames } from './match.model';
 
 describe('statusActions', () => {
   it('lets a scheduled match go live or be cancelled', () => {
@@ -19,6 +19,27 @@ describe('statusActions', () => {
     expect(statusActions('SCHEDULED').find((action) => action.status === 'LIVE')?.confirm).toBe(false);
     expect(statusActions('SCHEDULED').find((action) => action.status === 'CANCELLED')?.confirm).toBe(true);
     expect(statusActions('LIVE').find((action) => action.status === 'FINISHED')?.confirm).toBe(true);
+  });
+});
+
+describe('goalNeedsTeam', () => {
+  it('requires a team for a goal and not for other events', () => {
+    expect(goalNeedsTeam('GOAL', '')).toBe(false);
+    expect(goalNeedsTeam('GOAL', 'home')).toBe(true);
+    expect(goalNeedsTeam('FOUL', '')).toBe(true);
+  });
+});
+
+describe('withEventNames', () => {
+  it('fills team and player names from the loaded roster', () => {
+    const named = withEventNames(
+      { id: '1', type: 'GOAL', minute: 4, detail: null, teamId: 'home', playerId: 'p1', team: null, player: null },
+      { home: 'Clip Demo FC' },
+      { p1: { firstName: 'Demo', lastName: 'User Clip' } },
+    );
+
+    expect(named.team?.name).toBe('Clip Demo FC');
+    expect(named.player?.lastName).toBe('User Clip');
   });
 });
 

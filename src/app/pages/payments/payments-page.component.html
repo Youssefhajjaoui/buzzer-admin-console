@@ -1,0 +1,154 @@
+<section>
+  @if (error()) {
+    <p class="banner banner--danger" role="alert">{{ error() }}</p>
+  }
+
+  <div class="stats">
+    @for (status of statuses; track status) {
+      <article class="stat">
+        <span>{{ label(status) }}</span>
+        <strong>{{ card(status).total }}</strong>
+        <span>{{ card(status).count }} transactions</span>
+      </article>
+    }
+    <article class="stat">
+      <span>Gross revenue</span>
+      <strong>{{ summary()?.grossRevenue || '—' }}</strong>
+    </article>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Payment status">
+    @for (tab of tabs; track tab) {
+      <button
+        type="button"
+        role="tab"
+        class="tabs__tab"
+        [class.is-active]="status() === tab"
+        [attr.aria-selected]="status() === tab"
+        (click)="selectStatus(tab)"
+      >
+        {{ tabLabel(tab) }}
+      </button>
+    }
+  </div>
+
+  <div class="toolbar">
+    <input
+      #paymentSearch
+      class="search"
+      type="search"
+      placeholder="Search reference, customer, description, or method"
+      (input)="onSearch($event)"
+    />
+    <label class="field filter-field">
+      <span>Currency</span>
+      <select #currencySelect (change)="selectCurrency($event)">
+        <option value="ALL">All</option>
+        @for (code of currencies; track code) {
+          <option [value]="code">{{ code }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <div class="table-wrap">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Reference</th>
+          <th>Customer</th>
+          <th>Description</th>
+          <th>Method</th>
+          <th>Amount</th>
+          <th>Currency</th>
+          <th>Status</th>
+          <th>
+            <button class="sort" type="button" (click)="toggleSort()">
+              Created {{ sortOrder() === 'asc' ? '↑' : '↓' }}
+            </button>
+          </th>
+          @if (canManage) {
+            <th>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td [attr.colspan]="canManage ? 9 : 8" class="muted">Loading transactions…</td></tr>
+        } @else if (transactions().length === 0) {
+          <tr><td [attr.colspan]="canManage ? 9 : 8" class="muted">No transactions in this view.</td></tr>
+        } @else {
+          @for (transaction of transactions(); track transaction.id) {
+            <tr>
+              <td>
+                <button class="row-link" type="button" (click)="openDetail(transaction, detailDialog)">
+                  {{ transaction.reference }}
+                </button>
+              </td>
+              <td>{{ transaction.customer || '—' }}</td>
+              <td>{{ transaction.description || '—' }}</td>
+              <td>{{ transaction.method || '—' }}</td>
+              <td>{{ transaction.amountFormatted }}</td>
+              <td>{{ transaction.currency }}</td>
+              <td>
+                <span class="tag" [class]="'tag tag--' + transaction.status.toLowerCase()">{{ label(transaction.status) }}</span>
+              </td>
+              <td>{{ transaction.createdAt | date: 'MMM d, y, HH:mm' }}</td>
+              @if (canManage) {
+                <td>
+                  <button class="btn btn--ghost" type="button" (click)="openStatus(transaction, statusDialog)">Status</button>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager">
+    <button class="btn" type="button" [disabled]="page() <= 1" (click)="changePage(page() - 1)">Previous</button>
+    <span class="muted">Page {{ page() }} of {{ totalPages }}</span>
+    <button class="btn" type="button" [disabled]="page() >= totalPages" (click)="changePage(page() + 1)">Next</button>
+  </div>
+</section>
+
+<dialog #detailDialog class="dialog">
+  <h2>{{ selected()?.reference || 'Transaction' }}</h2>
+  @if (formError()) {
+    <p class="banner banner--danger" role="alert">{{ formError() }}</p>
+  }
+  <dl class="facts">
+    <div><dt>Customer</dt><dd>{{ selected()?.customer || '—' }}</dd></div>
+    <div><dt>Description</dt><dd>{{ selected()?.description || '—' }}</dd></div>
+    <div><dt>Method</dt><dd>{{ selected()?.method || '—' }}</dd></div>
+    <div><dt>Amount</dt><dd>{{ selected()?.amountFormatted }} {{ selected()?.currency }}</dd></div>
+    <div><dt>Status</dt><dd>{{ selected() ? label(selected()!.status) : '—' }}</dd></div>
+    <div><dt>Created</dt><dd>{{ selected()?.createdAt | date: 'MMM d, y, HH:mm' }}</dd></div>
+  </dl>
+  <div class="dialog__actions">
+    <button class="btn" type="button" (click)="detailDialog.close()">Close</button>
+  </div>
+</dialog>
+
+<dialog #statusDialog class="dialog">
+  <form [formGroup]="statusForm" (ngSubmit)="saveStatus(statusDialog)">
+    <h2>Change status?</h2>
+    <p class="muted">{{ selected()?.reference }} is {{ selected() ? label(selected()!.status) : '' }}.</p>
+    @if (formError()) {
+      <p class="banner banner--danger" role="alert">{{ formError() }}</p>
+    }
+    <label class="field">
+      <span>New status</span>
+      <select formControlName="status">
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ label(status) }}</option>
+        }
+      </select>
+    </label>
+    <div class="dialog__actions">
+      <button class="btn" type="button" (click)="statusDialog.close()">Cancel</button>
+      <button class="btn btn--accent" type="submit">Confirm</button>
+    </div>
+  </form>
+</dialog>

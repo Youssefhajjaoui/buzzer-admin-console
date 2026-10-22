@@ -218,6 +218,16 @@ table.grid {
   text-decoration: none;
 }
 
+button.row-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
 .row-link:hover {
   color: var(--color-accent);
 }
@@ -356,9 +366,37 @@ dialog.dialog::backdrop {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.tag--cancelled {
+.tag--cancelled,
+.tag--failed {
   color: #ec193c;
   background: rgba(236, 25, 60, 0.16);
+}
+
+.tag--pending {
+  color: #ffb414;
+  background: rgba(255, 180, 20, 0.14);
+}
+
+.tag--completed {
+  color: #2ed368;
+  background: rgba(46, 211, 104, 0.16);
+}
+
+.tag--refunded {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.event-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+
+.filter-field {
+  min-width: 140px;
 }
 
 .sort {

@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { ApiItem, ApiList, Sport, Team } from '../models/catalogue.model';
+import { ApiItem, ApiList, Player, Sport, Team } from '../models/catalogue.model';
 import { Match, MatchEvent, MatchStats, MatchStatus, Scoreboard } from '../models/match.model';
 import { ApiConfigService } from './api-config.service';
 
@@ -61,6 +61,23 @@ export class MatchService {
   updateStatus(id: string, status: MatchStatus): Observable<Match> {
     return this.http
       .patch<ApiItem<Match>>(this.api.endpoint(`/api/matches/${id}/status`), { status })
+      .pipe(map((response) => response.data));
+  }
+
+  addEvent(
+    id: string,
+    body: { type: string; minute: number; teamId?: string; playerId?: string; detail?: string },
+  ): Observable<MatchEvent> {
+    return this.http
+      .post<ApiItem<MatchEvent>>(this.api.endpoint(`/api/matches/${id}/events`), body)
+      .pipe(map((response) => response.data));
+  }
+
+  players(teamId: string): Observable<Player[]> {
+    return this.http
+      .get<ApiList<Player>>(this.api.endpoint('/api/organizations/players'), {
+        params: new HttpParams().set('teamId', teamId).set('limit', '100'),
+      })
       .pipe(map((response) => response.data));
   }
 

@@ -33,6 +33,10 @@
     }
   </dl>
 
+  @if (liveError()) {
+    <p class="banner banner--danger" role="alert">{{ liveError() }}</p>
+  }
+
   @if (canManage && actions().length) {
     <div class="toolbar__actions">
       @for (action of actions(); track action.status) {
@@ -47,6 +51,54 @@
         </button>
       }
     </div>
+  }
+
+  @if (canManage && current.status === 'LIVE') {
+    <section>
+      <div class="section-title"><h2>Add event</h2></div>
+      @if (eventError()) {
+        <p class="banner banner--danger" role="alert">{{ eventError() }}</p>
+      }
+      <form class="event-form" [formGroup]="eventForm" (ngSubmit)="addEvent()">
+        <label class="field">
+          <span>Type</span>
+          <select formControlName="type">
+            @for (type of eventTypes; track type) {
+              <option [value]="type">{{ eventType(type) }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Minute</span>
+          <input type="number" min="0" formControlName="minute" />
+        </label>
+        <label class="field">
+          <span>Team</span>
+          <select formControlName="teamId" (change)="onEventTeam()">
+            <option value="">Select a team</option>
+            <option [value]="current.homeTeamId">{{ current.homeTeam?.name || 'Home' }}</option>
+            <option [value]="current.awayTeamId">{{ current.awayTeam?.name || 'Away' }}</option>
+          </select>
+          @if (eventForm.controls.teamId.hasError('required') && eventForm.controls.type.value === 'GOAL') {
+            <small>A goal needs a team.</small>
+          }
+        </label>
+        <label class="field">
+          <span>Player</span>
+          <select formControlName="playerId">
+            <option value="">No player</option>
+            @for (player of players(); track player.id) {
+              <option [value]="player.id">{{ playerOption(player) }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Detail</span>
+          <input formControlName="detail" />
+        </label>
+        <button class="btn btn--accent" type="submit">Add event</button>
+      </form>
+    </section>
   }
 
   <section class="stack">

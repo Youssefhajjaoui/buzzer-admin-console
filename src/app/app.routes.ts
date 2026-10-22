@@ -76,7 +76,12 @@ export const routes: Routes = [
       section('articles', 'Articles', 'Publishing'),
       section('media', 'Media', 'Publishing'),
       section('notifications', 'Notifications', 'Publishing'),
-      section('payments', 'Payments', 'Finance'),
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./pages/payments/payments-page.component').then((module) => module.PaymentsPage),
+        data: { title: 'Payments', group: 'Finance' },
+      },
       section('invoices', 'Invoices', 'Finance'),
       section('reports', 'Reports', 'Finance'),
       section('users', 'Users', 'System'),
